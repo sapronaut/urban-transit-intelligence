@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 df = pd.read_csv("data/cta_ridership.csv")
+df = df.sample(200000, random_state=42)
 
 print("=" * 50)
 print("FIRST 5 ROWS")
