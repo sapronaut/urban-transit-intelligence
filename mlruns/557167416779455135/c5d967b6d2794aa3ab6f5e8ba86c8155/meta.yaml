@@ -1,0 +1,14 @@
+artifact_uri: file:C:/Users/SAPTARSHI/Desktop/Urban Transit Intelligence System/urban-transit-intelligence/mlruns/557167416779455135/c5d967b6d2794aa3ab6f5e8ba86c8155/artifacts
+end_time: 1780104206690
+entry_point_name: ''
+experiment_id: '557167416779455135'
+lifecycle_stage: active
+run_id: c5d967b6d2794aa3ab6f5e8ba86c8155
+run_name: baseline_run
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1780104206617
+status: 3
+tags: []
+user_id: SAPTARSHI
