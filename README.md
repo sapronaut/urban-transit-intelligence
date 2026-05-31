@@ -1,134 +1,62 @@
 # 🚆 Urban Transit Intelligence System
 
-An end-to-end Machine Learning and Data Engineering project that predicts public transit ridership using historical CTA station data, weather information, and intelligent forecasting models.
+![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python)
+![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-red?logo=streamlit)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green?logo=fastapi)
+![MLflow](https://img.shields.io/badge/MLflow-Tracking-blue?logo=mlflow)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
-## 📌 Project Overview
-
-This project analyzes Chicago Transit Authority (CTA) ridership patterns and builds a forecasting system capable of predicting station-level ridership based on temporal and operational features.
-
-The system combines:
-
-- Data Analysis & Visualization
-- Machine Learning Forecasting
-- Weather Data Integration
-- Experiment Tracking with MLflow
-- FastAPI Backend Services
-- Streamlit Dashboard
+An end-to-end Machine Learning and Data Engineering project that predicts public transit ridership using historical CTA station data, real-time weather information, and intelligent forecasting models.
 
 ---
 
-## 🚀 Features
+## 📌 Overview
 
-### Data Analytics
-- Ridership trend analysis
-- Station-level performance analysis
-- Top stations identification
+This project analyzes **Chicago Transit Authority (CTA)** ridership patterns and builds a forecasting system capable of predicting station-level ridership based on temporal and operational features.
+
+| Component | Technology |
+|-----------|-----------|
+| Dashboard | Streamlit |
+| Backend API | FastAPI |
+| ML Model | Scikit-Learn (Random Forest) |
+| Experiment Tracking | MLflow |
+| Weather Data | Open-Meteo API |
+
+---
+
+## ✨ Features
+
+### 📊 Data Analytics
+- Ridership trend analysis over time
+- Station-level performance comparisons
+- Top station identification and ranking
 - Historical transit usage visualization
 
-### Machine Learning
+### 🤖 Machine Learning
 - Random Forest Regression model
-- Ridership forecasting
-- Model evaluation using:
-  - MAE
-  - RMSE
-  - R² Score
+- Station-level ridership forecasting
+- Model evaluation with MAE, RMSE, and R²
 
-### Weather Integration
-- Real-time weather data using Open-Meteo API
-- Temperature monitoring
-- Humidity monitoring
-- Wind speed monitoring
+### 🌤 Weather Integration
+- Real-time weather via Open-Meteo API
+- Temperature, humidity, and wind speed monitoring
 
-### Dashboard
-- Interactive Streamlit dashboard
-- Ridership visualizations
-- Prediction interface
-- Weather monitoring panel
-
-### MLOps
-- MLflow experiment tracking
-- Model versioning
-- Metric logging
-- Training run comparison
-
----
-
-## 🛠 Tech Stack
-
-### Languages
-- Python
-
-### Libraries & Frameworks
-- Pandas
-- NumPy
-- Scikit-Learn
-- Streamlit
-- FastAPI
-- MLflow
-- Joblib
-- Requests
-- Matplotlib
-
-### APIs
-- Open-Meteo Weather API
-
----
-
-## 📊 Dataset
-
-Dataset Used:
-Chicago Transit Authority (CTA) Ridership Data
-
-Features:
-- Station ID
-- Station Name
-- Date
-- Day Type
-- Daily Ridership
+### 📈 MLOps
+- MLflow experiment tracking and model versioning
+- Metric logging and training run comparison
 
 ---
 
 ## 📈 Model Performance
 
 | Metric | Value |
-|----------|----------|
-| MAE | 1065.95 |
-| RMSE | 1602.14 |
+|--------|-------|
+| MAE | 1,065.95 |
+| RMSE | 1,602.14 |
 | R² Score | 0.7183 |
 
-The model explains approximately 71.8% of ridership variance using temporal and station-based features.
+> The model explains approximately **71.8% of ridership variance** using temporal and station-based features.
 
 ---
 
-## 📂 Project Structure
-
-urban-transit-intelligence/
-
-├── data/
-
-├── src/
-
-│ ├── api/
-
-│ ├── dashboard/
-
-│ └── models/
-
-├── notebooks/
-
-├── mlruns/
-
-├── model.pkl
-
-├── requirements.txt
-
-└── README.md
-
----
-
-## ▶️ Running Locally
-
-### Create Virtual Environment
-
-```bash
-python -m venv venv
+## 🗂 Project Structure
