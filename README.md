@@ -60,6 +60,7 @@ This project analyzes **Chicago Transit Authority (CTA)** ridership patterns and
 ---
 
 ## 🗂 Project Structure
+```
 urban-transit-intelligence/
 │
 ├── data/                       # CTA ridership dataset
@@ -75,7 +76,7 @@ urban-transit-intelligence/
 ├── model.pkl                   # Trained Random Forest model
 ├── requirements.txt
 └── README.md
-
+```
 ---
 
 ## 🛠 Tech Stack
