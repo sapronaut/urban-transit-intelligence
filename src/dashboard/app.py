@@ -9,7 +9,7 @@ st.set_page_config(page_title="Urban Transit Intelligence", layout="wide")
 st.title("🌐 Urban Transit Intelligence System")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-df = pd.read_csv(os.path.join(BASE_DIR, "../../data/cta_ridership.csv"))
+df = pd.read_csv(os.path.join(BASE_DIR, "../../data/CTA_ridership.csv"))
 
 df["rides"] = df["rides"].astype(str).str.replace(",", "")
 df["rides"] = pd.to_numeric(df["rides"])
