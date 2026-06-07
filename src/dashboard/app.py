@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import pandas as pd
 import joblib
@@ -5,15 +6,8 @@ import requests
 import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="Urban Transit Intelligence", layout="wide")
+st.title("🌐 Urban Transit Intelligence System")
 
-st.title("🚆 Urban Transit Intelligence System")
-
-import os
-
-# Change this line:
-df = pd.read_csv("data/cta_ridership.csv")
-
-# To this:
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 df = pd.read_csv(os.path.join(BASE_DIR, "../../data/cta_ridership.csv"))
 
