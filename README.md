@@ -141,7 +141,7 @@ streamlit run src/dashboard/app.py
 
 ## 🌐 Live Demo
 
-[![Streamlit App](https://urban-transit-intelligence-dmbk9qfj8vzt2qpemu4n8s.streamlit.app/)
+[Streamlit App](https://urban-transit-intelligence-dmbk9qfj8vzt2qpemu4n8s.streamlit.app/)
 
 ---
 
