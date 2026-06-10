@@ -51,11 +51,11 @@ This project analyzes **Chicago Transit Authority (CTA)** ridership patterns and
 
 | Metric | Value |
 |--------|-------|
-| MAE | 1,065.95 |
-| RMSE | 1,602.14 |
-| R² Score | 0.7183 |
+| MAE | 184.55 |
+| RMSE | 464.27 |
+| R² Score | 0.9763 |
 
-> The model explains approximately **71.8% of ridership variance** using temporal and station-based features.
+> The model explains approximately **97.6% of ridership variance** using temporal and station-based features.
 
 ---
 
@@ -113,12 +113,17 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Start the FastAPI Backend
+### 4. Train the Model
+```bash
+python src/models/train.py
+```
+
+### 5. Start the FastAPI Backend
 ```bash
 uvicorn src.api.main:app --reload
 ```
 
-### 5. Launch the Streamlit Dashboard
+### 6. Launch the Streamlit Dashboard
 ```bash
 streamlit run src/dashboard/app.py
 ```
@@ -134,7 +139,7 @@ streamlit run src/dashboard/app.py
 | `station_id` | Unique station identifier |
 | `stationname` | Name of the CTA station |
 | `date` | Date of ridership record |
-| `daytype` | Type of day (Weekday / Saturday / Holiday) |
+| `daytype` | Type of day — `W` = Weekday, `A` = Saturday, `U` = Sunday/Holiday |
 | `rides` | Daily ridership count |
 
 ---
@@ -147,4 +152,4 @@ streamlit run src/dashboard/app.py
 
 ## 📄 License
 
-This project is licensed under the MIT License. 
+This project is licensed under the MIT License.
