@@ -1,4 +1,4 @@
-# 🚆 Urban Transit Intelligence System
+# Urban Transit Intelligence System
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python)
 ![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-red?logo=streamlit)
@@ -10,7 +10,7 @@ An end-to-end Machine Learning and Data Engineering project that predicts public
 
 ---
 
-## 📌 Overview
+##  Overview
 
 This project analyzes **Chicago Transit Authority (CTA)** ridership patterns and builds a forecasting system capable of predicting station-level ridership based on temporal and operational features.
 
@@ -24,30 +24,30 @@ This project analyzes **Chicago Transit Authority (CTA)** ridership patterns and
 
 ---
 
-## ✨ Features
+##  Features
 
-### 📊 Data Analytics
+###  Data Analytics
 - Ridership trend analysis over time
 - Station-level performance comparisons
 - Top station identification and ranking
 - Historical transit usage visualization
 
-### 🤖 Machine Learning
+###  Machine Learning
 - Random Forest Regression model
 - Station-level ridership forecasting
 - Model evaluation with MAE, RMSE, and R²
 
-### 🌤 Weather Integration
+###  Weather Integration
 - Real-time weather via Open-Meteo API
 - Temperature, humidity, and wind speed monitoring
 
-### 📈 MLOps
+###  MLOps
 - MLflow experiment tracking and model versioning
 - Metric logging and training run comparison
 
 ---
 
-## 📈 Model Performance
+##  Model Performance
 
 | Metric | Value |
 |--------|-------|
@@ -59,7 +59,7 @@ This project analyzes **Chicago Transit Authority (CTA)** ridership patterns and
 
 ---
 
-## 🗂 Project Structure
+##  Project Structure
 ```
 urban-transit-intelligence/
 │
@@ -79,7 +79,7 @@ urban-transit-intelligence/
 ```
 ---
 
-## 🛠 Tech Stack
+##  Tech Stack
 
 **Languages:** Python 3.10+
 
@@ -89,7 +89,7 @@ urban-transit-intelligence/
 
 ---
 
-## ▶️ Running Locally
+##  Running Locally
 
 ### 1. Clone the Repository
 ```bash
@@ -130,7 +130,7 @@ streamlit run src/dashboard/app.py
 
 ---
 
-## 📊 Dataset
+##  Dataset
 
 **Source:** [Chicago Transit Authority (CTA) Ridership Data](https://data.cityofchicago.org/)
 
@@ -144,12 +144,12 @@ streamlit run src/dashboard/app.py
 
 ---
 
-## 🌐 Live Demo
+##  Live Demo
 
 [Streamlit App](https://urban-transit-intelligence-dmbk9qfj8vzt2qpemu4n8s.streamlit.app/)
 
 ---
 
-## 📄 License
+##  License
 
 This project is licensed under the MIT License.
