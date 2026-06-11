@@ -1,10 +1,11 @@
 import os
 import pandas as pd
+import numpy as np
 import mlflow
 import mlflow.sklearn
 import joblib
 
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
@@ -12,8 +13,8 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 # Paths
 # ---------------------------------------------------------------------------
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(BASE_DIR, "../../data/CTA_ridership.csv")
+BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
+DATA_PATH  = os.path.join(BASE_DIR, "../../data/CTA_ridership.csv")
 MODEL_PATH = os.path.join(BASE_DIR, "../../model.pkl")
 
 # ---------------------------------------------------------------------------
@@ -22,30 +23,24 @@ MODEL_PATH = os.path.join(BASE_DIR, "../../model.pkl")
 # ---------------------------------------------------------------------------
 
 DAYTYPE_MAP = {"U": 0, "W": 1, "A": 2}
+FEATURES    = ["station_id", "year", "month", "day", "weekday", "daytype"]
 
 # ---------------------------------------------------------------------------
 # Load and prepare data
 # ---------------------------------------------------------------------------
 
+print("Loading data...")
 df = pd.read_csv(DATA_PATH)
 
 df["rides"] = pd.to_numeric(
     df["rides"].astype(str).str.replace(",", "", regex=False)
 )
-
-df["date"] = pd.to_datetime(df["date"])
-df["year"] = df["date"].dt.year
-df["month"] = df["date"].dt.month
-df["day"] = df["date"].dt.day
+df["date"]    = pd.to_datetime(df["date"])
+df["year"]    = df["date"].dt.year
+df["month"]   = df["date"].dt.month
+df["day"]     = df["date"].dt.day
 df["weekday"] = df["date"].dt.dayofweek
-
 df["daytype"] = df["daytype"].map(DAYTYPE_MAP)
-
-# ---------------------------------------------------------------------------
-# Train / test split
-# ---------------------------------------------------------------------------
-
-FEATURES = ["station_id", "year", "month", "day", "weekday", "daytype"]
 
 X = df[FEATURES]
 y = df["rides"]
@@ -53,51 +48,85 @@ y = df["rides"]
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
+print(f"Train: {len(X_train):,} rows  |  Test: {len(X_test):,} rows")
 
 # ---------------------------------------------------------------------------
-# Model
+# Hyperparameter search
 # ---------------------------------------------------------------------------
 
-N_ESTIMATORS = 100
+PARAM_GRID = {
+    "n_estimators":    [100, 150, 200],
+    "max_depth":       [20, 25, 30],
+    "min_samples_leaf":[1, 2],
+    "max_features":    ["sqrt", 0.5],
+}
 
-model = RandomForestRegressor(
-    n_estimators=N_ESTIMATORS,
-    max_depth=10,
-    random_state=42,
-    n_jobs=-1,
+mlflow.set_tracking_uri("file:./mlruns")
+mlflow.set_experiment("Urban Transit Intelligence")
+
+print("\nRunning RandomizedSearchCV (n_iter=8, cv=3)...")
+
+base_model = RandomForestRegressor(random_state=42, n_jobs=-1)
+
+search = RandomizedSearchCV(
+    estimator   = base_model,
+    param_distributions = PARAM_GRID,
+    n_iter      = 8,
+    cv          = 3,
+    scoring     = "r2",
+    random_state= 42,
+    n_jobs      = 1,   # outer loop sequential to control memory
+    verbose     = 1,
 )
+search.fit(X_train, y_train)
 
-model.fit(X_train, y_train)
+# ---------------------------------------------------------------------------
+# Log every candidate run to MLflow
+# ---------------------------------------------------------------------------
 
-predictions = model.predict(X_test)
+print("\nLogging all candidate runs to MLflow...")
+results = search.cv_results_
+
+for i in range(len(results["params"])):
+    with mlflow.start_run(run_name=f"rf_candidate_{i+1}"):
+        mlflow.log_params(results["params"][i])
+        mlflow.log_metric("cv_r2_mean", results["mean_test_score"][i])
+        mlflow.log_metric("cv_r2_std",  results["std_test_score"][i])
+
+# ---------------------------------------------------------------------------
+# Evaluate best model on held-out test set
+# ---------------------------------------------------------------------------
+
+best_model = search.best_estimator_
+predictions = best_model.predict(X_test)
 
 mae  = mean_absolute_error(y_test, predictions)
 rmse = mean_squared_error(y_test, predictions) ** 0.5
 r2   = r2_score(y_test, predictions)
 
 # ---------------------------------------------------------------------------
-# MLflow logging
+# Log best model run to MLflow
 # ---------------------------------------------------------------------------
 
-mlflow.set_tracking_uri("file:./mlruns")
-mlflow.set_experiment("Urban Transit Intelligence")
-
-with mlflow.start_run(run_name="random_forest"):
-    mlflow.log_param("model", "RandomForest")
-    mlflow.log_param("n_estimators", N_ESTIMATORS)
-    mlflow.log_param("max_depth", 10)
-    mlflow.log_metric("mae", mae)
-    mlflow.log_metric("rmse", rmse)
-    mlflow.log_metric("r2", r2)
-    mlflow.sklearn.log_model(model, artifact_path="model")
+with mlflow.start_run(run_name="rf_best"):
+    mlflow.log_params(search.best_params_)
+    mlflow.log_metric("test_mae",  mae)
+    mlflow.log_metric("test_rmse", rmse)
+    mlflow.log_metric("test_r2",   r2)
+    mlflow.sklearn.log_model(best_model, artifact_path="model")
 
 # ---------------------------------------------------------------------------
-# Save model
+# Save best model to disk
 # ---------------------------------------------------------------------------
 
-joblib.dump(model, MODEL_PATH)
+joblib.dump(best_model, MODEL_PATH)
 
-print("\nTraining Complete")
-print(f"MAE  : {mae:.2f}")
-print(f"RMSE : {rmse:.2f}")
-print(f"R²   : {r2:.4f}")
+print("\n" + "="*50)
+print("Best hyperparameters:")
+for k, v in search.best_params_.items():
+    print(f"  {k}: {v}")
+print(f"\nTest set results:")
+print(f"  MAE  : {mae:.2f}")
+print(f"  RMSE : {rmse:.2f}")
+print(f"  R²   : {r2:.4f}")
+print("="*50)
