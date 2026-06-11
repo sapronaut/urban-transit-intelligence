@@ -6,7 +6,7 @@
 ![MLflow](https://img.shields.io/badge/MLflow-Tracking-blue?logo=mlflow)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-An end-to-end machine learning and data engineering project that predicts public transit ridership using historical CTA station data, real-time weather, and a tuned Random Forest model with full experiment tracking.
+An end-to-end machine learning and data engineering project that predicts public transit ridership using historical CTA station data, real-time weather, and competing ML models with full experiment tracking.
 
 ---
 
@@ -18,7 +18,7 @@ This project analyzes Chicago Transit Authority (CTA) ridership patterns across 
 |-----------|------------|
 | Dashboard | Streamlit |
 | Backend API | FastAPI |
-| ML Model | Scikit-Learn (Random Forest) |
+| ML Models | Random Forest · XGBoost |
 | Hyperparameter Tuning | RandomizedSearchCV |
 | Experiment Tracking | MLflow |
 | Weather Data | Open-Meteo API |
@@ -28,26 +28,24 @@ This project analyzes Chicago Transit Authority (CTA) ridership patterns across 
 
 ## Model Performance
 
-The model is selected via RandomizedSearchCV (8 candidates, 3-fold CV) and evaluated on a held-out 20% test set.
+Both models are tuned via RandomizedSearchCV (8 candidates, 3-fold CV) and evaluated on a held-out 20% test set. MLflow logs every candidate run from both searches, and the best overall model is automatically selected and saved.
 
-| Metric | Value |
-|--------|-------|
-| MAE | 310.24 |
-| RMSE | 691.18 |
-| R² Score | 0.9471 |
+| Model | R² | MAE | RMSE |
+|-------|----|-----|------|
+| Random Forest | 0.9471 | 310.24 | 691.18 |
+| **XGBoost (winner)** | **0.9505** | **361.90** | **665.70** |
 
-The model explains approximately **94.7% of ridership variance** using temporal and station-based features.
+XGBoost is selected as the production model based on R² and RMSE.
 
-**Best hyperparameters found:**
+**XGBoost best hyperparameters:**
 
 | Parameter | Value |
 |-----------|-------|
 | n_estimators | 200 |
-| max_depth | 25 |
-| min_samples_leaf | 1 |
-| max_features | sqrt |
-
-MLflow logs every candidate run separately, so the full search history is available under the `Urban Transit Intelligence` experiment.
+| max_depth | 8 |
+| learning_rate | 0.1 |
+| subsample | 0.9 |
+| colsample_bytree | 0.9 |
 
 ---
 
@@ -60,8 +58,8 @@ MLflow logs every candidate run separately, so the full search history is availa
 - Historical transit usage visualization
 
 **Machine Learning**
-- Random Forest Regression with RandomizedSearchCV tuning
-- Station-level daily ridership forecasting
+- Random Forest and XGBoost regression with RandomizedSearchCV tuning
+- Automatic model selection — best R² wins and is saved to production
 - Model evaluation with MAE, RMSE, and R²
 
 **Weather Integration**
@@ -69,9 +67,9 @@ MLflow logs every candidate run separately, so the full search history is availa
 - Temperature, humidity, and wind speed displayed on dashboard
 
 **MLOps**
-- MLflow experiment tracking with per-candidate run logging
+- MLflow experiment tracking with per-candidate run logging for both models
 - Model artifact versioning
-- GitHub Actions CI — trains model and runs full test suite on every push
+- GitHub Actions CI — trains both models and runs full test suite on every push
 
 ---
 
@@ -89,7 +87,7 @@ urban-transit-intelligence/
 │   ├── dashboard/
 │   │   └── app.py           # Streamlit dashboard
 │   └── models/
-│       └── train.py         # Training + hyperparameter search
+│       └── train.py         # RF + XGBoost training, search, auto-selection
 ├── tests/
 │   ├── conftest.py          # Shared pytest fixtures
 │   └── test_urban_transit.py # 24 tests across 4 test classes
@@ -123,12 +121,12 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Train the Model
+### 4. Train the Models
 ```bash
 python src/models/train.py
 ```
 
-This runs RandomizedSearchCV, logs all candidate runs to MLflow, and saves the best model to `model.pkl`.
+Runs RandomizedSearchCV for both Random Forest and XGBoost, logs all candidate runs to MLflow, compares test-set performance, and saves the winner to `model.pkl`.
 
 ### 5. Start the FastAPI Backend
 ```bash
@@ -189,7 +187,7 @@ pytest tests/ -v
 
 **Languages:** Python 3.10+
 
-**Libraries:** Pandas · NumPy · Scikit-Learn · Streamlit · FastAPI · MLflow · Joblib · Requests
+**Libraries:** Pandas · NumPy · Scikit-Learn · XGBoost · Streamlit · FastAPI · MLflow · Joblib · Requests
 
 **APIs:** Open-Meteo Weather API
 
