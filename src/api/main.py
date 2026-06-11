@@ -70,7 +70,7 @@ def weather():
     try:
         response = requests.get(url, timeout=5)
         response.raise_for_status()
-    except requests.RequestException as e:
+    except Exception as e:
         raise HTTPException(status_code=502, detail=f"Weather API error: {e}")
 
     current = response.json()["current"]
