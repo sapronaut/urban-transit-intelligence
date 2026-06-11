@@ -8,6 +8,7 @@ import joblib
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from xgboost import XGBRegressor
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -65,82 +66,143 @@ X_train, X_test, y_train, y_test = train_test_split(
 print(f"Train: {len(X_train):,} rows  |  Test: {len(X_test):,} rows")
 
 # ---------------------------------------------------------------------------
-# Hyperparameter search
+# MLflow setup
 # ---------------------------------------------------------------------------
 
-PARAM_GRID = {
+mlflow.set_tracking_uri("file:./mlruns")
+mlflow.set_experiment("Urban Transit Intelligence")
+
+# ---------------------------------------------------------------------------
+# Model 1 — Random Forest with RandomizedSearchCV
+# ---------------------------------------------------------------------------
+
+print("\n[1/2] Random Forest — RandomizedSearchCV (n_iter=8, cv=3)...")
+
+RF_PARAM_GRID = {
     "n_estimators":     [100, 150, 200],
     "max_depth":        [20, 25, 30],
     "min_samples_leaf": [1, 2],
     "max_features":     ["sqrt", 0.5],
 }
 
-mlflow.set_tracking_uri("file:./mlruns")
-mlflow.set_experiment("Urban Transit Intelligence")
-
-print("\nRunning RandomizedSearchCV (n_iter=8, cv=3)...")
-
-base_model = RandomForestRegressor(random_state=42, n_jobs=-1)
-
-search = RandomizedSearchCV(
-    estimator           = base_model,
-    param_distributions = PARAM_GRID,
+rf_search = RandomizedSearchCV(
+    estimator           = RandomForestRegressor(random_state=42, n_jobs=-1),
+    param_distributions = RF_PARAM_GRID,
     n_iter              = 8,
     cv                  = 3,
     scoring             = "r2",
     random_state        = 42,
-    n_jobs              = 1,   # outer loop sequential to control memory
+    n_jobs              = 1,
     verbose             = 1,
 )
-search.fit(X_train, y_train)
+rf_search.fit(X_train, y_train)
 
-# ---------------------------------------------------------------------------
-# Log every candidate run to MLflow
-# ---------------------------------------------------------------------------
-
-print("\nLogging all candidate runs to MLflow...")
-results = search.cv_results_
-
-for i in range(len(results["params"])):
+# Log all RF candidates
+rf_results = rf_search.cv_results_
+for i in range(len(rf_results["params"])):
     with mlflow.start_run(run_name=f"rf_candidate_{i+1}"):
-        mlflow.log_params(results["params"][i])
-        mlflow.log_metric("cv_r2_mean", results["mean_test_score"][i])
-        mlflow.log_metric("cv_r2_std",  results["std_test_score"][i])
+        mlflow.log_param("model", "RandomForest")
+        mlflow.log_params(rf_results["params"][i])
+        mlflow.log_metric("cv_r2_mean", rf_results["mean_test_score"][i])
+        mlflow.log_metric("cv_r2_std",  rf_results["std_test_score"][i])
 
-# ---------------------------------------------------------------------------
-# Evaluate best model on held-out test set
-# ---------------------------------------------------------------------------
-
-best_model  = search.best_estimator_
-predictions = best_model.predict(X_test)
-
-mae  = mean_absolute_error(y_test, predictions)
-rmse = mean_squared_error(y_test, predictions) ** 0.5
-r2   = r2_score(y_test, predictions)
-
-# ---------------------------------------------------------------------------
-# Log best model run to MLflow
-# ---------------------------------------------------------------------------
+# Evaluate best RF
+rf_best  = rf_search.best_estimator_
+rf_preds = rf_best.predict(X_test)
+rf_mae   = mean_absolute_error(y_test, rf_preds)
+rf_rmse  = mean_squared_error(y_test, rf_preds) ** 0.5
+rf_r2    = r2_score(y_test, rf_preds)
 
 with mlflow.start_run(run_name="rf_best"):
-    mlflow.log_params(search.best_params_)
-    mlflow.log_metric("test_mae",  mae)
-    mlflow.log_metric("test_rmse", rmse)
-    mlflow.log_metric("test_r2",   r2)
-    mlflow.sklearn.log_model(best_model, artifact_path="model")
+    mlflow.log_param("model", "RandomForest")
+    mlflow.log_params(rf_search.best_params_)
+    mlflow.log_metric("test_mae",  rf_mae)
+    mlflow.log_metric("test_rmse", rf_rmse)
+    mlflow.log_metric("test_r2",   rf_r2)
+    mlflow.sklearn.log_model(rf_best, artifact_path="model")
+
+print(f"RF best  — R²={rf_r2:.4f}  MAE={rf_mae:.2f}  RMSE={rf_rmse:.2f}")
+print(f"RF params: {rf_search.best_params_}")
 
 # ---------------------------------------------------------------------------
-# Save best model to disk
+# Model 2 — XGBoost with RandomizedSearchCV
 # ---------------------------------------------------------------------------
+
+print("\n[2/2] XGBoost — RandomizedSearchCV (n_iter=8, cv=3)...")
+
+XGB_PARAM_GRID = {
+    "n_estimators":  [200, 300, 400],
+    "max_depth":     [6, 8, 10],
+    "learning_rate": [0.05, 0.1, 0.15],
+    "subsample":     [0.8, 0.9, 1.0],
+    "colsample_bytree": [0.8, 0.9, 1.0],
+}
+
+xgb_search = RandomizedSearchCV(
+    estimator           = XGBRegressor(random_state=42, n_jobs=-1, verbosity=0),
+    param_distributions = XGB_PARAM_GRID,
+    n_iter              = 8,
+    cv                  = 3,
+    scoring             = "r2",
+    random_state        = 42,
+    n_jobs              = 1,
+    verbose             = 1,
+)
+xgb_search.fit(X_train, y_train)
+
+# Log all XGB candidates
+xgb_results = xgb_search.cv_results_
+for i in range(len(xgb_results["params"])):
+    with mlflow.start_run(run_name=f"xgb_candidate_{i+1}"):
+        mlflow.log_param("model", "XGBoost")
+        mlflow.log_params(xgb_results["params"][i])
+        mlflow.log_metric("cv_r2_mean", xgb_results["mean_test_score"][i])
+        mlflow.log_metric("cv_r2_std",  xgb_results["std_test_score"][i])
+
+# Evaluate best XGB
+xgb_best  = xgb_search.best_estimator_
+xgb_preds = xgb_best.predict(X_test)
+xgb_mae   = mean_absolute_error(y_test, xgb_preds)
+xgb_rmse  = mean_squared_error(y_test, xgb_preds) ** 0.5
+xgb_r2    = r2_score(y_test, xgb_preds)
+
+with mlflow.start_run(run_name="xgb_best"):
+    mlflow.log_param("model", "XGBoost")
+    mlflow.log_params(xgb_search.best_params_)
+    mlflow.log_metric("test_mae",  xgb_mae)
+    mlflow.log_metric("test_rmse", xgb_rmse)
+    mlflow.log_metric("test_r2",   xgb_r2)
+    mlflow.sklearn.log_model(xgb_best, artifact_path="model")
+
+print(f"XGB best — R²={xgb_r2:.4f}  MAE={xgb_mae:.2f}  RMSE={xgb_rmse:.2f}")
+print(f"XGB params: {xgb_search.best_params_}")
+
+# ---------------------------------------------------------------------------
+# Select and save the best overall model
+# ---------------------------------------------------------------------------
+
+print("\n" + "="*55)
+print("Model Comparison (test set):")
+print(f"  Random Forest : R²={rf_r2:.4f}  MAE={rf_mae:.2f}  RMSE={rf_rmse:.2f}")
+print(f"  XGBoost       : R²={xgb_r2:.4f}  MAE={xgb_mae:.2f}  RMSE={xgb_rmse:.2f}")
+
+if xgb_r2 >= rf_r2:
+    best_model      = xgb_best
+    best_model_name = "XGBoost"
+    best_r2, best_mae, best_rmse = xgb_r2, xgb_mae, xgb_rmse
+    best_params = xgb_search.best_params_
+else:
+    best_model      = rf_best
+    best_model_name = "RandomForest"
+    best_r2, best_mae, best_rmse = rf_r2, rf_mae, rf_rmse
+    best_params = rf_search.best_params_
+
+print(f"\nWinner: {best_model_name}")
+print(f"  R²   : {best_r2:.4f}")
+print(f"  MAE  : {best_mae:.2f}")
+print(f"  RMSE : {best_rmse:.2f}")
+print(f"  Params: {best_params}")
+print("="*55)
 
 joblib.dump(best_model, MODEL_PATH)
-
-print("\n" + "="*50)
-print("Best hyperparameters:")
-for k, v in search.best_params_.items():
-    print(f"  {k}: {v}")
-print(f"\nTest set results:")
-print(f"  MAE  : {mae:.2f}")
-print(f"  RMSE : {rmse:.2f}")
-print(f"  R2   : {r2:.4f}")
-print("="*50)
+print(f"\nSaved {best_model_name} to {MODEL_PATH}")
