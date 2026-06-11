@@ -42,6 +42,20 @@ df["day"]     = df["date"].dt.day
 df["weekday"] = df["date"].dt.dayofweek
 df["daytype"] = df["daytype"].map(DAYTYPE_MAP)
 
+# ---------------------------------------------------------------------------
+# CI mode — cap rows to avoid GitHub Actions memory limit.
+# Set CI_SAMPLE_SIZE env var to enable (e.g. 200000).
+# Full dataset is used when running locally.
+# ---------------------------------------------------------------------------
+
+sample_size = os.environ.get("CI_SAMPLE_SIZE")
+if sample_size:
+    n = int(sample_size)
+    print(f"CI mode: sampling {n:,} rows from {len(df):,} total")
+    df = df.sample(n=n, random_state=42)
+else:
+    print(f"Full dataset: {len(df):,} rows")
+
 X = df[FEATURES]
 y = df["rides"]
 
@@ -55,10 +69,10 @@ print(f"Train: {len(X_train):,} rows  |  Test: {len(X_test):,} rows")
 # ---------------------------------------------------------------------------
 
 PARAM_GRID = {
-    "n_estimators":    [100, 150, 200],
-    "max_depth":       [20, 25, 30],
-    "min_samples_leaf":[1, 2],
-    "max_features":    ["sqrt", 0.5],
+    "n_estimators":     [100, 150, 200],
+    "max_depth":        [20, 25, 30],
+    "min_samples_leaf": [1, 2],
+    "max_features":     ["sqrt", 0.5],
 }
 
 mlflow.set_tracking_uri("file:./mlruns")
@@ -69,14 +83,14 @@ print("\nRunning RandomizedSearchCV (n_iter=8, cv=3)...")
 base_model = RandomForestRegressor(random_state=42, n_jobs=-1)
 
 search = RandomizedSearchCV(
-    estimator   = base_model,
+    estimator           = base_model,
     param_distributions = PARAM_GRID,
-    n_iter      = 8,
-    cv          = 3,
-    scoring     = "r2",
-    random_state= 42,
-    n_jobs      = 1,   # outer loop sequential to control memory
-    verbose     = 1,
+    n_iter              = 8,
+    cv                  = 3,
+    scoring             = "r2",
+    random_state        = 42,
+    n_jobs              = 1,   # outer loop sequential to control memory
+    verbose             = 1,
 )
 search.fit(X_train, y_train)
 
@@ -97,7 +111,7 @@ for i in range(len(results["params"])):
 # Evaluate best model on held-out test set
 # ---------------------------------------------------------------------------
 
-best_model = search.best_estimator_
+best_model  = search.best_estimator_
 predictions = best_model.predict(X_test)
 
 mae  = mean_absolute_error(y_test, predictions)
@@ -128,5 +142,5 @@ for k, v in search.best_params_.items():
 print(f"\nTest set results:")
 print(f"  MAE  : {mae:.2f}")
 print(f"  RMSE : {rmse:.2f}")
-print(f"  R²   : {r2:.4f}")
+print(f"  R2   : {r2:.4f}")
 print("="*50)
